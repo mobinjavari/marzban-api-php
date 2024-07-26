@@ -34,6 +34,14 @@ class xuiMarzban
         return $this->sendRequest("/user/$username");
     }
 
+    public function delUser(string $username): array
+    {
+        if (is_null($this->auth_token))
+            return $this->sendResponse(401);
+
+        return $this->sendRequest("/user/$username", method: self::Method_DELETE);
+    }
+
     private function authToken(string $username, string $password): string|null
     {
         $data = http_build_query([
@@ -84,10 +92,10 @@ class xuiMarzban
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                 CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_CUSTOMREQUEST => $method
             ];
 
             if ($method == self::Method_POST || $method == self::Method_PUT) {
-                $options[CURLOPT_CUSTOMREQUEST] = $method;
                 $options[CURLOPT_POSTFIELDS] = $data;
             }
 
