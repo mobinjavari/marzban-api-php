@@ -4,6 +4,20 @@ class xuiMarzban
 {
     public string|null $auth_token = null;
 
+    private array $inbounds = [
+        'vmess' => [
+            "VMess TCP",
+            "VMess Websocket"
+        ],
+        'vless' => [
+            "VLESS TCP REALITY",
+            "VLESS GRPC REALITY"
+        ],
+        'shadowsocks' => [
+            "Shadowsocks TCP"
+        ]
+    ];
+
     const Method_POST = 'POST';
     const Method_GET = 'GET';
     const Method_PUT = 'PUT';
@@ -40,6 +54,81 @@ class xuiMarzban
             return $this->sendResponse(401);
 
         return $this->sendRequest("/user/$username", method: self::Method_DELETE);
+    }
+
+    public function addUser(
+        string $username,
+        int $expire = 0,
+        int $data_limit = 0,
+        bool $vless = false,
+        bool $vmess = false,
+        bool $shadow_socks = false
+    )
+    {
+        $proxies = [];
+        $inbounds = [];
+
+        if ($vless) {
+            $proxies['vless'] = [
+                'id' => $this->genUserId(),
+                'flow' => ''
+            ];
+            $inbounds['vless'] = $this->inbounds['vless'];
+        }
+
+        if ($vmess) {
+            $proxies['vmess'] = ['id' => $this->genUserId()];
+            $inbounds['vmess'] = $this->inbounds['vmess'];
+        }
+
+        if ($shadow_socks) {
+            $proxies['shadowsocks'] = [
+                'password' => $this->randomString(6),
+                'method' => 'chacha20-ietf-poly1305'
+            ];
+            $inbounds['shadowsocks'] = $this->inbounds['shadowsocks'];
+        }
+
+        $data = json_encode([
+            'username' => $username,
+            'proxies' => $proxies,
+            'inbounds' => $inbounds,
+            'expire' => $expire,
+            'data_limit' => $data_limit,
+            'data_limit_reset_strategy' => 'no_reset',
+            'status' => 'active',
+            'note' => '',
+            'on_hold_timeout' => null,
+            'on_hold_expire_duration' => 0
+        ]);
+        $headers = [
+            'Content-Type: application/json'
+        ];
+        return $this->sendRequest('/user', $data, self::Method_POST, $headers);
+    }
+
+    /**
+     * @throws \Random\RandomException
+     */
+    public function genUserId(): string
+    {
+        $data = random_bytes(16);
+        $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+        $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+    }
+
+    public function randomString(int $length): string
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+
+        return $randomString;
     }
 
     private function authToken(string $username, string $password): string|null
