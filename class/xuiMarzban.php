@@ -2,7 +2,7 @@
 
 class xuiMarzban
 {
-    private string|null $auth_token = null;
+    public string|null $auth_token = null;
 
     const Method_POST = 'POST';
     const Method_GET = 'GET';
@@ -21,25 +21,38 @@ class xuiMarzban
 
     public function getUsers(): array
     {
+        if (is_null($this->auth_token))
+            return $this->sendResponse(404);
         return $this->sendRequest('/users');
     }
 
     private function authToken(string $username, string $password): string|null
     {
-        $data = [
+        $data = http_build_query([
             'username' => $username,
             'password' => $password
-        ];
+        ]);
         $headers = [
             'Content-Type: application/x-www-form-urlencoded'
         ];
         $res = $this->sendRequest('/admin/token', data: $data, method: self::Method_POST, headers: $headers);
 
         if ($res['status'] == 200) {
-            return $res['data']['token'];
+            return $res['data']['access_token'];
         }
 
         return null;
+    }
+
+    private function sendResponse(
+        int $http_code,
+        array|object|string|null $data = null
+    ): array
+    {
+        return [
+            'status' => $http_code,
+            'data' => $data ?: null
+        ];
     }
 
     private function sendRequest(
@@ -52,7 +65,7 @@ class xuiMarzban
         if (filter_var($this->host, FILTER_VALIDATE_URL)) {
             $headers[] = 'Authorization: Bearer ' . $this->auth_token;
             $options = [
-                CURLOPT_URL =>  $this->host . "/api/$path",
+                CURLOPT_URL =>  $this->host . "api{$path}",
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,
@@ -65,11 +78,9 @@ class xuiMarzban
                 CURLOPT_HTTPHEADER => $headers,
             ];
 
-            if ($method == 'POST' || $method == 'PUT') {
-                $options = array_merge($options, [
-                    CURLOPT_CUSTOMREQUEST => 'POST',
-                    CURLOPT_POSTFIELDS => $data
-                ]);
+            if ($method == self::Method_POST || $method == self::Method_PUT) {
+                $options[CURLOPT_CUSTOMREQUEST] = $method;
+                $options[CURLOPT_POSTFIELDS] = $data;
             }
 
             $curl = curl_init();
@@ -77,16 +88,11 @@ class xuiMarzban
             $response = curl_exec($curl);
             $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
             curl_close($curl);
+            $data = json_decode($response, true) ?: [];
 
-            return [
-                'status' => $http_code,
-                'data' => json_decode($response, true) ?: []
-            ];
+            return $this->sendResponse($http_code, $data);
         }
 
-        return [
-            'status' => 404,
-            'data' => null
-        ];
+        return $this->sendResponse(404);
     }
 }
