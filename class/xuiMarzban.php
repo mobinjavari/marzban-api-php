@@ -4,10 +4,10 @@ class xuiMarzban
 {
     private string|null $auth_token = null;
 
-    const string Method_POST = 'POST';
-    const string Method_GET = 'GET';
-    const string Method_PUT = 'PUT';
-    const string Method_DELETE = 'DELETE';
+    const Method_POST = 'POST';
+    const Method_GET = 'GET';
+    const Method_PUT = 'PUT';
+    const Method_DELETE = 'DELETE';
 
     public function __construct(
         private readonly string $host,
