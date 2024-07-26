@@ -22,8 +22,16 @@ class xuiMarzban
     public function getUsers(): array
     {
         if (is_null($this->auth_token))
-            return $this->sendResponse(404);
+            return $this->sendResponse(401);
         return $this->sendRequest('/users');
+    }
+
+    public function getUser(string $username): array
+    {
+        if (is_null($this->auth_token))
+            return $this->sendResponse(401);
+
+        return $this->sendRequest("/user/$username");
     }
 
     private function authToken(string $username, string $password): string|null
