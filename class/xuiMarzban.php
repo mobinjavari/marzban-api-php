@@ -141,6 +141,14 @@ class xuiMarzban
         return $this->sendRequest("/user/$username/reset", method: self::Method_POST);
     }
 
+    public function revokeUserSub(string $username): array
+    {
+        if (is_null($this->auth_token))
+            return $this->sendResponse(401);
+
+        return $this->sendRequest("/user/$username/revoke_sub", method: self::Method_POST);
+    }
+
     /**
      * @throws \Random\RandomException
      */
