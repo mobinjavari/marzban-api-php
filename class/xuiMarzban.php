@@ -149,6 +149,37 @@ class xuiMarzban
         return $this->sendRequest("/user/$username/revoke_sub", method: self::Method_POST);
     }
 
+    public function editUser(string $username, array $update = []): array
+    {
+        if (is_null($this->auth_token))
+            return $this->sendResponse(401);
+
+        $user = $this->getUser($username);
+
+        if ($user['status'] == 200) {
+            $user = $user['data'];
+            $status = $update['status'] ?? $user['status'];
+            $data = json_encode([
+                'proxies' => $user['proxies'],
+                'inbounds' => $user['inbounds'],
+                'expire' => $update['expire'] ?? $user['expire'],
+                'data_limit' => $update['volume'] ?? $user['data_limit'],
+                'data_limit_reset_strategy' => $update['data_limit_reset_strategy'] ?? $user['data_limit_reset_strategy'],
+                'status' => $status ? 'active' : 'disabled',
+                'note' => $update['note'] ?? $user['note'],
+                'on_hold_timeout' => $user['on_hold_timeout'],
+                'on_hold_expire_duration' => $user['on_hold_expire_duration'],
+            ]);
+            $headers = [
+                'Content-Type: application/json'
+            ];
+
+            return $this->sendRequest("/user/$username", $data, self::Method_PUT, $headers);
+        }
+
+        return $user;
+    }
+
     /**
      * @throws \Random\RandomException
      */
