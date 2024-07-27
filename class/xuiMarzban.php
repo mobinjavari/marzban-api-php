@@ -2,6 +2,8 @@
 
 class xuiMarzban
 {
+    private string $host = '';
+
     private string|null $auth_token = null;
 
     private array $inbounds = [
@@ -24,11 +26,12 @@ class xuiMarzban
     const Method_DELETE = 'DELETE';
 
     public function __construct(
-        private readonly string $host,
+        string $host,
         string $username,
         string $password
     )
     {
+        $this->host = $this->formatServerUrl($host);
         $this->auth_token = $this->authToken($username, $password);
     }
 
@@ -161,6 +164,39 @@ class xuiMarzban
 
         return $user;
     }
+
+    public static function formatServerUrl(string $url): string
+    {
+        if (filter_var($url, FILTER_VALIDATE_URL)) {
+            $addSlashUrl = str_ends_with($url, '/') ? $url : "$url/";
+
+            if (str_starts_with($addSlashUrl, 'api://')) {
+                $sslUrl = str_replace('api://', 'ssl://', $addSlashUrl);
+                $httpsUrl = str_replace('ssl://', 'https://', $sslUrl);
+                $httpUrl = str_replace('https://', 'http://', $httpsUrl);
+                $conText = stream_context_create(['ssl' => ['capture_peer_cert' => true]]);
+                $stream = stream_socket_client($sslUrl, $errNo, $errMg, 2, STREAM_CLIENT_CONNECT, $conText);
+
+                if (!$stream) {
+                    return $httpUrl; // SSL connection failed
+                }
+
+                $params = stream_context_get_params($stream);
+                $cert = $params['options']['ssl']['peer_certificate'];
+
+                if (!$cert) {
+                    return $httpUrl; // No SSL certificate found
+                }
+
+                return $httpsUrl; // SSL certificate found
+            }
+
+            return $addSlashUrl;
+        }
+
+        return '';
+    }
+
 
     /**
      * @throws \Random\RandomException
