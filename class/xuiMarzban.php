@@ -56,48 +56,74 @@ class xuiMarzban
         return $this->sendRequest("/user/$username", method: self::Method_DELETE);
     }
 
+    private function proxies(
+        bool $vmess = false,
+        bool $vless = false,
+        bool $shadow_socks = false
+    ): array
+    {
+        $proxies = [];
+
+        if ($vmess)
+            $proxies['vmess'] = ['id' => $this->genUserId()];
+
+        if ($vless)
+            $proxies['vless'] = [
+                'id' => $this->genUserId(),
+                'flow' => ''
+            ];
+
+        if ($shadow_socks)
+            $proxies['shadowsocks'] = [
+                'password' => $this->randomString(6),
+                'method' => 'chacha20-ietf-poly1305'
+            ];
+
+        return $proxies;
+    }
+
+    private function inbounds(
+        bool $vmess = false,
+        bool $vless = false,
+        bool $shadow_socks = false
+    ): array
+    {
+        $inbounds = [];
+
+        if ($vmess)
+            $inbounds['vmess'] = $this->inbounds['vmess'];
+
+        if ($vless)
+            $inbounds['vless'] = $this->inbounds['vless'];
+
+        if ($shadow_socks)
+            $inbounds['shadowsocks'] = $this->inbounds['shadowsocks'];
+
+        return $inbounds;
+    }
+
     public function addUser(
         string $username,
-        int $expire = 0,
-        int $data_limit = 0,
+        float $volume = 0,
+        int $days = 0,
+        bool $status = true,
+        string $note = '',
         bool $vless = false,
         bool $vmess = false,
         bool $shadow_socks = false
     )
     {
-        $proxies = [];
-        $inbounds = [];
-
-        if ($vless) {
-            $proxies['vless'] = [
-                'id' => $this->genUserId(),
-                'flow' => ''
-            ];
-            $inbounds['vless'] = $this->inbounds['vless'];
-        }
-
-        if ($vmess) {
-            $proxies['vmess'] = ['id' => $this->genUserId()];
-            $inbounds['vmess'] = $this->inbounds['vmess'];
-        }
-
-        if ($shadow_socks) {
-            $proxies['shadowsocks'] = [
-                'password' => $this->randomString(6),
-                'method' => 'chacha20-ietf-poly1305'
-            ];
-            $inbounds['shadowsocks'] = $this->inbounds['shadowsocks'];
-        }
-
+        $volume *= 1024 * 1024 * 1024;
+        $days *= 60 * 60 * 24;
         $data = json_encode([
             'username' => $username,
-            'proxies' => $proxies,
-            'inbounds' => $inbounds,
-            'expire' => $expire,
-            'data_limit' => $data_limit,
+            'proxies' => $this->proxies(vmess: $vmess, vless: $vless, shadow_socks: $shadow_socks),
+            'inbounds' => $this->inbounds(vmess: $vmess, vless: $vless, shadow_socks: $shadow_socks),
+            'expire' => time() + $days,
+            'data_limit' => $volume,
             'data_limit_reset_strategy' => 'no_reset',
-            'status' => 'active',
-            'note' => '',
+            'status' => $status ? 'active' : 'disabled',
+            'note' => $note,
             'on_hold_timeout' => null,
             'on_hold_expire_duration' => 0
         ]);
