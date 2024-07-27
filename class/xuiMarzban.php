@@ -133,6 +133,14 @@ class xuiMarzban
         return $this->sendRequest('/user', $data, self::Method_POST, $headers);
     }
 
+    public function resetUserTraffic(string $username): array
+    {
+        if (is_null($this->auth_token))
+            return $this->sendResponse(401);
+
+        return $this->sendRequest("/user/$username/reset", method: self::Method_POST);
+    }
+
     /**
      * @throws \Random\RandomException
      */
