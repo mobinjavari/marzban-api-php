@@ -2,7 +2,7 @@
 
 class xuiMarzban
 {
-    public string|null $auth_token = null;
+    private string|null $auth_token = null;
 
     private array $inbounds = [
         'vmess' => [
@@ -30,29 +30,20 @@ class xuiMarzban
     )
     {
         $this->auth_token = $this->authToken($username, $password);
-
     }
 
     public function getUsers(): array
     {
-        if (is_null($this->auth_token))
-            return $this->sendResponse(401);
         return $this->sendRequest('/users');
     }
 
     public function getUser(string $username): array
     {
-        if (is_null($this->auth_token))
-            return $this->sendResponse(401);
-
         return $this->sendRequest("/user/$username");
     }
 
     public function delUser(string $username): array
     {
-        if (is_null($this->auth_token))
-            return $this->sendResponse(401);
-
         return $this->sendRequest("/user/$username", method: self::Method_DELETE);
     }
 
@@ -135,25 +126,16 @@ class xuiMarzban
 
     public function resetUserTraffic(string $username): array
     {
-        if (is_null($this->auth_token))
-            return $this->sendResponse(401);
-
         return $this->sendRequest("/user/$username/reset", method: self::Method_POST);
     }
 
     public function revokeUserSub(string $username): array
     {
-        if (is_null($this->auth_token))
-            return $this->sendResponse(401);
-
         return $this->sendRequest("/user/$username/revoke_sub", method: self::Method_POST);
     }
 
     public function editUser(string $username, array $update = []): array
     {
-        if (is_null($this->auth_token))
-            return $this->sendResponse(401);
-
         $user = $this->getUser($username);
 
         if ($user['status'] == 200) {
@@ -213,7 +195,13 @@ class xuiMarzban
         $headers = [
             'Content-Type: application/x-www-form-urlencoded'
         ];
-        $res = $this->sendRequest('/admin/token', data: $data, method: self::Method_POST, headers: $headers);
+        $res = $this->sendRequest(
+            '/admin/token',
+            data: $data,
+            method: self::Method_POST,
+            headers: $headers,
+            require_auth: false
+        );
 
         if ($res['status'] == 200) {
             return $res['data']['access_token'];
@@ -237,9 +225,13 @@ class xuiMarzban
         string $path,
         array|object|string $data = [],
         string $method = self::Method_GET,
-        array $headers = []
+        array $headers = [],
+        bool $require_auth = true
     ): array
     {
+        if (is_null($this->auth_token) && $require_auth)
+            return $this->sendResponse(401);
+
         if (filter_var($this->host, FILTER_VALIDATE_URL)) {
             $headers[] = 'Authorization: Bearer ' . $this->auth_token;
             $options = [
