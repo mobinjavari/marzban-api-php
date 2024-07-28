@@ -6,6 +6,8 @@ class xuiMarzban
 
     private string|null $auth_token = null;
 
+    private array $system = [];
+
     private array $inbounds = [
         'vmess' => [
             "VMess TCP",
@@ -33,6 +35,21 @@ class xuiMarzban
     {
         $this->host = $this->formatServerUrl($host);
         $this->auth_token = $this->authToken($username, $password);
+        $this->system = $this->system();
+    }
+
+    public function system(): array
+    {
+        if ($this->system)
+            return $this->system;
+
+        $system = $this->sendRequest('/system');
+
+        if ($system['status'] == 200) {
+            $this->system = $system['data'];
+        }
+
+        return $this->system;
     }
 
     public function getUsers(): array
