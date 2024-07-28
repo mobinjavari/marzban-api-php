@@ -54,17 +54,23 @@ class xuiMarzban
 
     public function getUsers(): array
     {
-        return $this->sendRequest('/users');
+        $users = $this->sendRequest('/users');
+
+        return $users['status'] == 200 ? $users['data'] : [];
     }
 
     public function getUser(string $username): array
     {
-        return $this->sendRequest("/user/$username");
+        $user = $this->sendRequest("/user/$username");
+
+        return $user['status'] == 200 ? $user['data'] : [];
     }
 
     public function delUser(string $username): array
     {
-        return $this->sendRequest("/user/$username", method: self::Method_DELETE);
+        $delete = $this->sendRequest("/user/$username", method: self::Method_DELETE);
+
+        return $delete['status'] == 200 ? $delete['data'] : [];
     }
 
     private function proxies(
@@ -141,17 +147,23 @@ class xuiMarzban
         $headers = [
             'Content-Type: application/json'
         ];
-        return $this->sendRequest('/user', $data, self::Method_POST, $headers);
+        $add = $this->sendRequest('/user', $data, self::Method_POST, $headers);
+
+        return $add['status'] == 200 ? $add['data'] : [];
     }
 
     public function resetUserTraffic(string $username): array
     {
-        return $this->sendRequest("/user/$username/reset", method: self::Method_POST);
+        $reset = $this->sendRequest("/user/$username/reset", method: self::Method_POST);
+
+        return $reset['status'] == 200 ? $reset['data'] : [];
     }
 
     public function revokeUserSub(string $username): array
     {
-        return $this->sendRequest("/user/$username/revoke_sub", method: self::Method_POST);
+        $revoke = $this->sendRequest("/user/$username/revoke", method: self::Method_POST);
+
+        return $revoke['status'] == 200 ? $revoke['data'] : [];
     }
 
     public function editUser(string $username, array $update = []): array
@@ -175,11 +187,13 @@ class xuiMarzban
             $headers = [
                 'Content-Type: application/json'
             ];
+            $edit = $this->sendRequest("/user/$username", $data, self::Method_PUT, $headers);
 
-            return $this->sendRequest("/user/$username", $data, self::Method_PUT, $headers);
+            if ($edit['status'] == 200)
+                return $edit['data'];
         }
 
-        return $user;
+        return [];
     }
 
     public static function formatServerUrl(string $url): string
@@ -256,11 +270,7 @@ class xuiMarzban
             require_auth: false
         );
 
-        if ($res['status'] == 200) {
-            return $res['data']['access_token'];
-        }
-
-        return null;
+        return $res['status'] == 200 ? $res['data']['access_token'] : null;
     }
 
     private function sendResponse(
