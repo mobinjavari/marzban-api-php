@@ -63,7 +63,17 @@ class xuiMarzban
     {
         $user = $this->sendRequest("/user/$username");
 
-        return $user['status'] == 200 ? $user['data'] : [];
+        if ($user['status'] == 200) {
+            $user = $user['data'];
+            $days = ($user['expire'] - time()) / (60 * 60 * 24);
+            $user['remaining_days'] = round(max(0 ,$days));
+            $user['remaining_traffic'] = max(0, $user['data_limit'] - $user['used_traffic']);
+            $user['used_percent'] = round($user['used_traffic'] / $user['data_limit'] * 100);
+
+            return $user;
+        }
+
+        return [];
     }
 
     public function delUser(string $username): array
@@ -168,7 +178,7 @@ class xuiMarzban
 
     public function subInfo(string $sub_link): array
     {
-        $info = $this->sendRequest("/sub/$sub_link/info");
+        $info = $this->sendRequest("/sub/$sub_link/info", base_path: '');
 
         return $info['status'] == 200 ? $info['data'] : [];
     }
@@ -323,7 +333,8 @@ class xuiMarzban
         array|object|string $data = [],
         string $method = self::Method_GET,
         array $headers = [],
-        bool $require_auth = true
+        bool $require_auth = true,
+        string $base_path = 'api'
     ): array
     {
         if (is_null($this->auth_token) && $require_auth)
@@ -332,7 +343,7 @@ class xuiMarzban
         if (filter_var($this->host, FILTER_VALIDATE_URL)) {
             $headers[] = 'Authorization: Bearer ' . $this->auth_token;
             $options = [
-                CURLOPT_URL =>  $this->host . "api{$path}",
+                CURLOPT_URL =>  $this->host . "$base_path{$path}",
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,
