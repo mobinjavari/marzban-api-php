@@ -173,11 +173,15 @@ class xuiMarzban
         if ($user['status'] == 200) {
             $user = $user['data'];
             $status = $update['status'] ?? $user['status'];
+            $expire = $update['expire'] ?? $user['expire'];
+            $add_days = $update['add_days'] ?? 0;
+            $data_limit = $update['volume'] ?? $user['data_limit'];
+            $add_volume = $update['volume'] ?? 0;
             $data = json_encode([
                 'proxies' => $user['proxies'],
                 'inbounds' => $user['inbounds'],
-                'expire' => $update['expire'] ?? $user['expire'],
-                'data_limit' => $update['volume'] ?? $user['data_limit'],
+                'expire' => $expire + ($add_days * 60 * 60 * 24),
+                'data_limit' => $data_limit + ($add_volume * 1024 * 1024 * 1024),
                 'data_limit_reset_strategy' => $update['data_limit_reset_strategy'] ?? $user['data_limit_reset_strategy'],
                 'status' => $status ? 'active' : 'disabled',
                 'note' => $update['note'] ?? $user['note'],
