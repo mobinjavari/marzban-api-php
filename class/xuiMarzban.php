@@ -166,6 +166,13 @@ class xuiMarzban
         return $revoke['status'] == 200 ? $revoke['data'] : [];
     }
 
+    public function subInfo(string $sub_link): array
+    {
+        $info = $this->sendRequest("/user/$sub_link/info");
+
+        return $info['status'] == 200 ? $info['data'] : [];
+    }
+
     public function editUser(string $username, array $update = []): array
     {
         $user = $this->getUser($username);
