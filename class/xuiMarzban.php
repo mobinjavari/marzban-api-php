@@ -168,7 +168,7 @@ class xuiMarzban
 
     public function subInfo(string $sub_link): array
     {
-        $info = $this->sendRequest("/user/$sub_link/info");
+        $info = $this->sendRequest("/sub/$sub_link/info");
 
         return $info['status'] == 200 ? $info['data'] : [];
     }
