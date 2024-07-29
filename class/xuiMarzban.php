@@ -257,6 +257,29 @@ class xuiMarzban
         return $randomString;
     }
 
+    public static function formatBytes(
+        int  $size,
+        int  $format = 0,
+        int  $precision = 0,
+        bool $arrayReturn = false
+    ): array|string
+    {
+        $base = log($size, 1024);
+        $units = match ($format) {
+            1 => ['بایت', 'کلوبایت', 'مگابایت', 'گیگابایت', 'ترابایت'], # Persian
+            2 => ['B', 'K', 'M', 'G', 'T'],
+            default => ['B', 'KB', 'MB', 'GB', 'TB']
+        };
+
+        if (!$size) return $arrayReturn ? [0, $units[1]] : "0 {$units[1]}";
+
+        $result = pow(1024, $base - floor($base));
+        $result = round($result, $precision);
+        $unit = $units[floor($base)];
+
+        return $arrayReturn ? [$result, $unit] : "$result $unit";
+    }
+
     private function authToken(string $username, string $password): string|null
     {
         $data = http_build_query([
