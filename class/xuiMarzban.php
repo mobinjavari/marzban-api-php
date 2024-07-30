@@ -187,13 +187,13 @@ class xuiMarzban
     {
         $user = $this->getUser($username);
 
-        if ($user['status'] == 200) {
-            $user = $user['data'];
+        if ($user) {
             $status = $update['status'] ?? $user['status'];
+            $status = isset($update['toggle_status']) ? !$status : $status;
             $expire = $update['expire'] ?? $user['expire'];
             $add_days = $update['add_days'] ?? 0;
             $data_limit = $update['volume'] ?? $user['data_limit'];
-            $add_volume = $update['volume'] ?? 0;
+            $add_volume = $update['add_volume'] ?? 0;
             $data = json_encode([
                 'proxies' => $user['proxies'],
                 'inbounds' => $user['inbounds'],
