@@ -4,6 +4,8 @@ class xuiMarzban
 {
     private string $host = '';
 
+    private string $ip = '';
+
     private string|null $auth_token = null;
 
     private array $system = [];
@@ -29,11 +31,13 @@ class xuiMarzban
 
     public function __construct(
         string $host,
-        string $username,
-        string $password
+        string $ip = '',
+        string $username = '',
+        string $password = ''
     )
     {
         $this->host = $this->formatServerUrl($host);
+        $this->ip = $this->formatServerUrl($ip);
         $this->auth_token = $this->authToken($username, $password);
         $this->system = $this->system();
     }
@@ -217,7 +221,7 @@ class xuiMarzban
         return [];
     }
 
-    public static function formatServerUrl(string $url): string
+    public function formatServerUrl(string $url): string
     {
         if (filter_var($url, FILTER_VALIDATE_URL)) {
             $addSlashUrl = str_ends_with($url, '/') ? $url : "$url/";
@@ -319,12 +323,12 @@ class xuiMarzban
 
     private function sendResponse(
         int $http_code,
-        array|object|string|null $data = null
+        array|object|string|null $data = []
     ): array
     {
         return [
             'status' => $http_code,
-            'data' => $data ?: null
+            'data' => $data ?: []
         ];
     }
 
@@ -342,8 +346,9 @@ class xuiMarzban
 
         if (filter_var($this->host, FILTER_VALIDATE_URL)) {
             $headers[] = 'Authorization: Bearer ' . $this->auth_token;
+            $host = empty($this->ip) ? $this->host : $this->ip;
             $options = [
-                CURLOPT_URL =>  $this->host . "$base_path{$path}",
+                CURLOPT_URL =>  $host . "$base_path{$path}",
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,
