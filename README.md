@@ -21,14 +21,14 @@
                 </td>
             </tr>
             <tr>
-                <td><b>Marzban API</b></td>
+                <td>👉 <b>Marzban API</b></td>
                 <td>API Wrapper for Marzban panel</td>
                 <td>
                     <a href="https://github.com/mobinjavari/marzban-api-php">Github</a>
                 </td>
             </tr>
             <tr>
-                <td>👉 <b>Marzneshin API</b></td>
+                <td><b>Marzneshin API</b></td>
                 <td>API Wrapper for Marzneshin panel</td>
                 <td>
                     <a href="https://github.com/mobinjavari/marzneshin-api-php">Github</a>
